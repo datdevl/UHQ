@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hỗ Trợ Gia Đình Bạn Quý Trong Lúc Khó Khăn</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', serif;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3f4f6 100%);
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 800px;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            border: 1px solid #d1d5db;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #4b5563;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background-color: #f9fafb;
+        }
+        .qr-section {
+            margin: 30px 0;
+        }
+        .qr-image {
+            max-width: 200px;
+            margin-bottom: 20px;
+            border: 2px solid #d1d5db;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        button {
+            background-color: #1e3a8a;
+            color: #fff;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: relative;
+        }
+        button:hover {
+            background-color: #1e40af;
+        }
+        button:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+        }
+        .donors-list {
+            margin-top: 40px;
+            text-align: left;
+        }
+        .donors-list h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #1e3a8a;
+            font-weight: bold;
+        }
+        .donors-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .donors-list li {
+            font-size: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+            color: #4b5563;
+        }
+        .form-link {
+            color: #1e40af;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .form-link:hover {
+            text-decoration: underline;
+        }
+        .spinner {
+            display: none;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #1e3a8a;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hỗ Trợ Gia Đình Bạn Trong Lúc Khó Khăn</h1>
+        <p><i>Kính gửi!</i><br><br>
+        Chúng ta vừa nhận được tin buồn về sự ra đi của một thành viên trong gia đình bạn <b>Đỗ Viết Quý</b>. Trong thời điểm khó khăn này, lớp chúng ta <b>12A2</b> kêu gọi sự đóng góp từ trái tim của mọi người để giúp đỡ gia đình vượt qua nỗi đau và ổn định cuộc sống. Mọi sự hỗ trợ, dù nhỏ bé, đều mang ý nghĩa lớn lao và sẽ được trân trọng mãi mãi.<br><br>
+        Hãy cùng nhau lan tỏa yêu thương và đoàn kết <b>!!!</b></p>
+        
+        <div class="form-group">
+            <label for="donor-name">Tên của bạn (tùy chọn, để hiển thị trong danh sách người quyên góp):</label>
+            <input type="text" id="donor-name" placeholder="Nhập tên của bạn">
+        </div>
+        
+        <div class="qr-section">
+            <p>Quét mã QR dưới đây để thực hiện chuyển khoản quyên góp:</p>
+            <img src="./qr.jpeg" alt="Mã QR Chuyển Khoản" class="qr-image">
+            <br>
+            <button id="confirm-donation-btn">Lưu QR và Xác Nhận Quyên Góp <span class="spinner" id="spinner"></span></button>
+        </div>
+        
+        <div class="donors-list">
+            <h2>Cảm Ơn Bạn Đã Đóng Góp</h2>
+            <ul id="donors-ul"></ul>
+        </div>
+    </div>
+
+    <script>
+        // Danh sách người quyên góp
+        let accounts = [];
+
+        // Hàm tải danh sách từ Google Sheet
+        async function fetchAccountsFromGoogleSheet() {
+            const url = 'https://docs.google.com/spreadsheets/d/19aJa4MoH5auEkgSZ2TlLI0s6oPqUQj5JHwxqNcc-5bw/export?format=csv&gid=2005531439';
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`Không thể tải dữ liệu từ Google Sheets: ${res.status}`);
+                const text = await res.text();
+                const lines = text.trim().split('\n');
+                accounts = lines.slice(1).map(line => {
+                    const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const name = parts[1]?.trim().replace(/^"|"$/g, '');
+                    return { name };
+                }).filter(acc => acc.name);
+                displayDonors();
+            } catch (err) {
+                console.error('Lỗi khi tải Google Sheet:', err);
+                document.getElementById('donors-ul').innerHTML = '<li>Không thể tải danh sách người quyên góp. Vui lòng thử lại sau.</li>';
+            }
+        }
+
+        // Hàm hiển thị danh sách người quyên góp
+        function displayDonors() {
+            const donorsList = document.getElementById('donors-ul');
+            donorsList.innerHTML = '';
+            if (accounts.length === 0) {
+                donorsList.innerHTML = '<li>Chưa có người quyên góp.</li>';
+            } else {
+                accounts.forEach(acc => {
+                    const li = document.createElement('li');
+                    li.textContent = acc.name;
+                    donorsList.appendChild(li);
+                });
+            }
+        }
+
+        // Hàm gửi dữ liệu đến Google Apps Script
+        async function submitToGoogleForm(name) {
+            const webAppURL = 'https://script.google.com/macros/s/AKfycbwvUqqEc07HIPByzThAvORkyFRP9be33NvF-YdBWDlGfPmInjDK-rFEVQ0vpNCdzjoo0g/exec';
+            const url = `${webAppURL}?name=${encodeURIComponent(name)}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'GET', // Apps Script dùng doGet
+                    mode: 'cors' // Thử cors để nhận phản hồi
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log('Dữ liệu đã gửi thành công:', { name });
+                    return true;
+                } else {
+                    console.error('Lỗi từ Apps Script:', result.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Lỗi khi gửi dữ liệu:', error);
+                return false;
+            }
+        }
+
+        // Xử lý nút xác nhận quyên góp
+        document.getElementById('confirm-donation-btn').addEventListener('click', async () => {
+            const button = document.getElementById('confirm-donation-btn');
+            const spinner = document.getElementById('spinner');
+            button.disabled = true;
+            spinner.style.display = 'block';
+            button.textContent = 'Đang xử lý...';
+
+            const name = document.getElementById('donor-name').value.trim();
+            let success = true;
+
+            // Gửi tên nếu có
+            if (name) {
+                success = await submitToGoogleForm(name);
+                if (success) {
+                    document.getElementById('donor-name').value = ''; // Xóa input
+                    await fetchAccountsFromGoogleSheet(); // Cập nhật danh sách
+                }
+            }
+
+            // Lưu QR
+            const link = document.createElement('a');
+            link.href = document.querySelector('.qr-image').src;
+            link.download = 'qr-chuyen-khoan.png';
+            link.click();
+
+            // Thông báo
+            button.disabled = false;
+            spinner.style.display = 'none';
+            button.textContent = 'Lưu QR và Xác Nhận Quyên Góp';
+            if (success) {
+                alert('✅ Cảm ơn bạn đã quyên góp! Tên của bạn đã được ghi nhận và QR đã được lưu.');
+            } else if (name) {
+                alert('❌ Lỗi khi gửi tên, nhưng QR đã được lưu. Vui lòng thử lại hoặc dùng Google Form.');
+            } else {
+                alert('✅ Cảm ơn bạn đã quyên góp! QR đã được lưu.');
+            }
+        });
+
+        // Tải danh sách ban đầu
+        fetchAccountsFromGoogleSheet();
+    </script>
+</body>
+</html>
